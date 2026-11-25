@@ -1,0 +1,626 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Global Hardened Primitives
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedOwner() {
+      return isVerified() && request.auth.token.email == 'tchuekrostand@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedOwner() || (
+        isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() >= 1 && val.size() <= maxLen;
+    }
+
+    function isBoundedString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isValidSlug(val, maxLen) {
+      return val is string && val.size() >= 1 && val.size() <= maxLen && val.matches('^[a-z0-9-]+$');
+    }
+
+    function isValidPillar(val) {
+      return val in ['EVERLASH', 'EVERBROW', 'EVERNAILS', 'EVERWAX', 'EVER SPMU', 'EVERBODY'];
+    }
+
+    function isValidInstagramSection(sec) {
+      return sec is map &&
+        sec.keys().hasAll(['eyebrow', 'heading', 'subtitle', 'handle', 'ctaLabel', 'maxPosts']) &&
+        sec.keys().hasOnly(['eyebrow', 'heading', 'subtitle', 'handle', 'ctaLabel', 'maxPosts']) &&
+        isBoundedString(sec.eyebrow, 100) &&
+        isNonEmptyString(sec.heading, 140) &&
+        isBoundedString(sec.subtitle, 400) &&
+        isNonEmptyString(sec.handle, 80) &&
+        isNonEmptyString(sec.ctaLabel, 80) &&
+        sec.maxPosts is number &&
+        sec.maxPosts >= 1 &&
+        sec.maxPosts <= 12;
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints (Anti-Update-Gap)
+    // =========================================================================
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll([
+          'brand',
+          'hero',
+          'quote',
+          'editorialCollage',
+          'marqueePhrase',
+          'treatmentZones',
+          'personalisedSection',
+          'houseSection',
+          'story',
+          'footerBanner',
+          'arcSlides',
+          'structure',
+          'updatedAt',
+          'updatedBy'
+        ]) &&
+        data.keys().hasOnly([
+          'brand',
+          'hero',
+          'quote',
+          'editorialCollage',
+          'marqueePhrase',
+          'silhouetteImage',
+          'treatmentZones',
+          'personalisedSection',
+          'houseSection',
+          'story',
+          'footerBanner',
+          'instagramSection',
+          'arcSlides',
+          'structure',
+          'updatedAt',
+          'updatedBy'
+        ]) &&
+        data.brand is map &&
+        isNonEmptyString(data.brand.name, 80) &&
+        isNonEmptyString(data.brand.houseName, 80) &&
+        isBoundedString(data.brand.tagline, 160) &&
+        isBoundedString(data.brand.phoneDisplay, 60) &&
+        isBoundedString(data.brand.phoneHref, 80) &&
+        isBoundedString(data.brand.whatsappNumber, 40) &&
+        isBoundedString(data.brand.email, 160) &&
+        isBoundedString(data.brand.copyright, 200) &&
+        data.hero is map &&
+        isNonEmptyString(data.hero.headline, 160) &&
+        isBoundedString(data.hero.scrollLabel, 80) &&
+        isNonEmptyString(data.hero.image, 250000) &&
+        isBoundedString(data.hero.imageAlt, 240) &&
+        data.quote is map &&
+        isNonEmptyString(data.quote.text, 400) &&
+        isBoundedString(data.quote.sublabel, 200) &&
+        data.editorialCollage is map &&
+        data.editorialCollage.headingLines is list &&
+        data.editorialCollage.headingLines.size() >= 1 &&
+        data.editorialCollage.headingLines.size() <= 5 &&
+        data.editorialCollage.headingLines[0] is string &&
+        data.editorialCollage.tiles is list &&
+        data.editorialCollage.tiles.size() >= 1 &&
+        data.editorialCollage.tiles.size() <= 6 &&
+        isNonEmptyString(data.marqueePhrase, 120) &&
+        (!('silhouetteImage' in data) || isNonEmptyString(data.silhouetteImage, 250000)) &&
+        data.treatmentZones is list &&
+        data.treatmentZones.size() <= 10 &&
+        data.personalisedSection is map &&
+        isBoundedString(data.personalisedSection.kicker, 120) &&
+        isBoundedString(data.personalisedSection.description, 800) &&
+        isNonEmptyString(data.personalisedSection.image, 250000) &&
+        data.houseSection is map &&
+        isBoundedString(data.houseSection.subBrand, 80) &&
+        isBoundedString(data.houseSection.description, 800) &&
+        isNonEmptyString(data.houseSection.backgroundImage, 250000) &&
+        isNonEmptyString(data.houseSection.insetImage, 250000) &&
+        data.story is map &&
+        isNonEmptyString(data.story.headline, 240) &&
+        isBoundedString(data.story.lead, 1200) &&
+        data.footerBanner is map &&
+        isNonEmptyString(data.footerBanner.label, 160) &&
+        isNonEmptyString(data.footerBanner.image, 250000) &&
+        (!('instagramSection' in data) || isValidInstagramSection(data.instagramSection)) &&
+        data.arcSlides is list &&
+        data.arcSlides.size() >= 1 &&
+        data.arcSlides.size() <= 10 &&
+        data.structure is map &&
+        data.structure.sectionOrder is list &&
+        data.structure.sectionOrder.size() >= 1 &&
+        data.structure.sectionOrder.size() <= 10 &&
+        data.structure.sectionOrder[0] is string &&
+        data.structure.hiddenSections is list &&
+        data.structure.hiddenSections.size() <= 10 &&
+        data.structure.showPreloader is bool &&
+        data.structure.showFooterContactForm is bool &&
+        data.structure.showFooterBanner is bool &&
+        data.updatedAt == request.time &&
+        isNonEmptyString(data.updatedBy, 200);
+    }
+
+    function isValidService(data) {
+      return data.keys().hasAll([
+          'index',
+          'slug',
+          'name',
+          'pillar',
+          'shortDescription',
+          'fullDescription',
+          'duration',
+          'technicianPrice',
+          'stylistPrice',
+          'highlights',
+          'aftercare',
+          'image',
+          'order',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'index',
+          'slug',
+          'name',
+          'pillar',
+          'shortDescription',
+          'fullDescription',
+          'duration',
+          'technicianPrice',
+          'stylistPrice',
+          'highlights',
+          'aftercare',
+          'image',
+          'order',
+          'updatedAt'
+        ]) &&
+        isNonEmptyString(data.index, 10) &&
+        isValidSlug(data.slug, 120) &&
+        isNonEmptyString(data.name, 120) &&
+        isValidPillar(data.pillar) &&
+        isNonEmptyString(data.shortDescription, 500) &&
+        isNonEmptyString(data.fullDescription, 2500) &&
+        isNonEmptyString(data.duration, 60) &&
+        isNonEmptyString(data.technicianPrice, 80) &&
+        isNonEmptyString(data.stylistPrice, 80) &&
+        data.highlights is list &&
+        data.highlights.size() <= 10 &&
+        (data.highlights.size() == 0 || data.highlights[0] is string) &&
+        data.aftercare is list &&
+        data.aftercare.size() <= 10 &&
+        (data.aftercare.size() == 0 || data.aftercare[0] is string) &&
+        isNonEmptyString(data.image, 250000) &&
+        data.order is number &&
+        data.order >= 0 &&
+        data.order <= 1000 &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidLocation(data) {
+      return data.keys().hasAll([
+          'name',
+          'city',
+          'district',
+          'address',
+          'hours',
+          'phone',
+          'privateRooms',
+          'servicesAvailable',
+          'mapNote',
+          'order',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'name',
+          'city',
+          'district',
+          'address',
+          'hours',
+          'phone',
+          'privateRooms',
+          'servicesAvailable',
+          'mapNote',
+          'order',
+          'updatedAt'
+        ]) &&
+        isNonEmptyString(data.name, 140) &&
+        isNonEmptyString(data.city, 80) &&
+        isNonEmptyString(data.district, 100) &&
+        isNonEmptyString(data.address, 400) &&
+        isNonEmptyString(data.hours, 120) &&
+        isNonEmptyString(data.phone, 60) &&
+        data.privateRooms is number &&
+        data.privateRooms >= 0 &&
+        data.privateRooms <= 200 &&
+        data.servicesAvailable is list &&
+        data.servicesAvailable.size() <= 6 &&
+        data.servicesAvailable.hasOnly(['EVERLASH', 'EVERBROW', 'EVERNAILS', 'EVERWAX', 'EVER SPMU', 'EVERBODY']) &&
+        isBoundedString(data.mapNote, 240) &&
+        data.order is number &&
+        data.order >= 0 &&
+        data.order <= 1000 &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidJournalArticle(data) {
+      return data.keys().hasAll([
+          'slug',
+          'title',
+          'category',
+          'date',
+          'readTime',
+          'excerpt',
+          'image',
+          'body',
+          'order',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'slug',
+          'title',
+          'category',
+          'date',
+          'readTime',
+          'excerpt',
+          'image',
+          'body',
+          'order',
+          'updatedAt'
+        ]) &&
+        isValidSlug(data.slug, 160) &&
+        isNonEmptyString(data.title, 200) &&
+        isNonEmptyString(data.category, 60) &&
+        isNonEmptyString(data.date, 50) &&
+        isNonEmptyString(data.readTime, 40) &&
+        isNonEmptyString(data.excerpt, 600) &&
+        isNonEmptyString(data.image, 250000) &&
+        data.body is list &&
+        data.body.size() >= 1 &&
+        data.body.size() <= 20 &&
+        data.body[0] is string &&
+        data.order is number &&
+        data.order >= 0 &&
+        data.order <= 1000 &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidFaq(data) {
+      return data.keys().hasAll([
+          'question',
+          'paragraphs',
+          'hasLocationLink',
+          'order',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'question',
+          'paragraphs',
+          'hasLocationLink',
+          'order',
+          'updatedAt'
+        ]) &&
+        isNonEmptyString(data.question, 300) &&
+        data.paragraphs is list &&
+        data.paragraphs.size() >= 1 &&
+        data.paragraphs.size() <= 10 &&
+        data.paragraphs[0] is string &&
+        data.hasLocationLink is bool &&
+        data.order is number &&
+        data.order >= 0 &&
+        data.order <= 1000 &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidInstagramPost(data) {
+      return data.keys().hasAll([
+          'imageUrl',
+          'caption',
+          'permalink',
+          'timestamp',
+          'mediaType',
+          'order',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'imageUrl',
+          'caption',
+          'permalink',
+          'timestamp',
+          'mediaType',
+          'pillar',
+          'serviceSlug',
+          'username',
+          'order',
+          'updatedAt'
+        ]) &&
+        isNonEmptyString(data.imageUrl, 250000) &&
+        isNonEmptyString(data.caption, 1200) &&
+        isNonEmptyString(data.permalink, 500) &&
+        isNonEmptyString(data.timestamp, 60) &&
+        data.mediaType in ['IMAGE', 'VIDEO', 'CAROUSEL_ALBUM'] &&
+        (!('pillar' in data) || isValidPillar(data.pillar)) &&
+        (!('serviceSlug' in data) || isValidSlug(data.serviceSlug, 120)) &&
+        (!('username' in data) || isBoundedString(data.username, 60)) &&
+        data.order is number &&
+        data.order >= 0 &&
+        data.order <= 1000 &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidMediaAsset(data) {
+      return data.keys().hasAll(['label', 'category', 'url', 'alt', 'createdAt']) &&
+        data.keys().hasOnly(['label', 'category', 'url', 'alt', 'createdAt']) &&
+        isNonEmptyString(data.label, 120) &&
+        data.category in ['Hero', 'Editorial', 'Services', 'Journal', 'Sanctuary'] &&
+        isNonEmptyString(data.url, 250000) &&
+        isBoundedString(data.alt, 240) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['type', 'name', 'contact', 'message', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'type',
+          'name',
+          'contact',
+          'message',
+          'serviceName',
+          'locationName',
+          'therapistTier',
+          'preferredDate',
+          'preferredTime',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.type in ['contact', 'booking'] &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 120 &&
+        data.contact is string && data.contact.size() >= 5 && data.contact.size() <= 160 &&
+        isBoundedString(data.message, 2000) &&
+        (!('serviceName' in data) || isBoundedString(data.serviceName, 140)) &&
+        (!('locationName' in data) || isBoundedString(data.locationName, 140)) &&
+        (!('therapistTier' in data) || isBoundedString(data.therapistTier, 40)) &&
+        (!('preferredDate' in data) || isBoundedString(data.preferredDate, 40)) &&
+        (!('preferredTime' in data) || isBoundedString(data.preferredTime, 40)) &&
+        data.status in ['new', 'contacted', 'archived'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['email', 'displayName', 'role', 'createdAt']) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 180 &&
+        isNonEmptyString(data.displayName, 120) &&
+        data.role in ['manager', 'owner'] &&
+        data.createdAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Match Blocks (Exhaustive Blueprint Coverage)
+    // =========================================================================
+
+    // Global Site Settings (`main`)
+    match /siteSettings/{docId} {
+      allow get: if isValidId(docId) && docId == 'main';
+      allow create: if isValidId(docId) && docId == 'main' && isValidSiteSettings(incoming()) && isAdmin();
+      allow update: if isValidId(docId) &&
+        docId == 'main' &&
+        isValidSiteSettings(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'brand',
+          'hero',
+          'quote',
+          'editorialCollage',
+          'marqueePhrase',
+          'silhouetteImage',
+          'treatmentZones',
+          'personalisedSection',
+          'houseSection',
+          'story',
+          'footerBanner',
+          'instagramSection',
+          'arcSlides',
+          'structure',
+          'updatedAt',
+          'updatedBy'
+        ]) &&
+        isAdmin();
+      allow delete: if false;
+    }
+
+    // Services Menu
+    match /services/{serviceId} {
+      allow get: if isValidId(serviceId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(serviceId) && isValidService(incoming()) && isAdmin();
+      allow update: if isValidId(serviceId) &&
+        isValidService(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'index',
+          'slug',
+          'name',
+          'pillar',
+          'shortDescription',
+          'fullDescription',
+          'duration',
+          'technicianPrice',
+          'stylistPrice',
+          'highlights',
+          'aftercare',
+          'image',
+          'order',
+          'updatedAt'
+        ]) &&
+        isAdmin();
+      allow delete: if isValidId(serviceId) && isAdmin();
+    }
+
+    // Studio Locations
+    match /locations/{locationId} {
+      allow get: if isValidId(locationId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(locationId) && isValidLocation(incoming()) && isAdmin();
+      allow update: if isValidId(locationId) &&
+        isValidLocation(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name',
+          'city',
+          'district',
+          'address',
+          'hours',
+          'phone',
+          'privateRooms',
+          'servicesAvailable',
+          'mapNote',
+          'order',
+          'updatedAt'
+        ]) &&
+        isAdmin();
+      allow delete: if isValidId(locationId) && isAdmin();
+    }
+
+    // Editorial Journal Articles
+    match /journal/{articleId} {
+      allow get: if isValidId(articleId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(articleId) && isValidJournalArticle(incoming()) && isAdmin();
+      allow update: if isValidId(articleId) &&
+        isValidJournalArticle(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug',
+          'title',
+          'category',
+          'date',
+          'readTime',
+          'excerpt',
+          'image',
+          'body',
+          'order',
+          'updatedAt'
+        ]) &&
+        isAdmin();
+      allow delete: if isValidId(articleId) && isAdmin();
+    }
+
+    // FAQs
+    match /faqs/{faqId} {
+      allow get: if isValidId(faqId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(faqId) && isValidFaq(incoming()) && isAdmin();
+      allow update: if isValidId(faqId) &&
+        isValidFaq(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'question',
+          'paragraphs',
+          'hasLocationLink',
+          'order',
+          'updatedAt'
+        ]) &&
+        isAdmin();
+      allow delete: if isValidId(faqId) && isAdmin();
+    }
+
+    // Curated Studio Instagram Posts
+    match /instagramPosts/{postId} {
+      allow get: if isValidId(postId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(postId) && isValidInstagramPost(incoming()) && isAdmin();
+      allow update: if isValidId(postId) &&
+        isValidInstagramPost(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'imageUrl',
+          'caption',
+          'permalink',
+          'timestamp',
+          'mediaType',
+          'pillar',
+          'serviceSlug',
+          'username',
+          'order',
+          'updatedAt'
+        ]) &&
+        isAdmin();
+      allow delete: if isValidId(postId) && isAdmin();
+    }
+
+    // Media Assets Library
+    match /mediaAssets/{assetId} {
+      allow get: if isValidId(assetId);
+      allow list: if request.query.limit <= 100;
+      allow create: if isValidId(assetId) &&
+        isValidMediaAsset(incoming()) &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if isValidId(assetId) &&
+        isValidMediaAsset(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['label', 'category', 'url', 'alt']) &&
+        isAdmin();
+      allow delete: if isValidId(assetId) && isAdmin();
+    }
+
+    // Client Inquiries & Bookings (Strict PII Isolation: public create-only, manager read/update/delete)
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && isAdmin();
+      allow list: if isBootstrappedOwner();
+      allow create: if isValidId(inquiryId) &&
+        isValidInquiry(incoming()) &&
+        incoming().status == 'new' &&
+        incoming().createdAt == request.time;
+      allow update: if isValidId(inquiryId) &&
+        isValidInquiry(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().type == existing().type &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+        isAdmin();
+      allow delete: if isValidId(inquiryId) && isAdmin();
+    }
+
+    // Authorized Salon Managers
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isAdmin() || (isVerified() && request.auth.uid == adminId));
+      allow list: if isBootstrappedOwner();
+      allow create: if isValidId(adminId) &&
+        isValidAdminUser(incoming()) &&
+        incoming().createdAt == request.time &&
+        isBootstrappedOwner();
+      allow update: if isValidId(adminId) &&
+        isValidAdminUser(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'role']) &&
+        isBootstrappedOwner();
+      allow delete: if isValidId(adminId) && isBootstrappedOwner();
+    }
+  }
+}

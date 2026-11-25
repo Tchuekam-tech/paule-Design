@@ -1,0 +1,6 @@
+{
+  "name": "EVER — Beauty in Every Detail",
+  "description": "Luxury beauty house experience featuring lash, brow, nail, waxing, SPMU, and body rituals, live Instagram studio showcase, interactive treatment mapping, and a real-time Salon Manager Console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

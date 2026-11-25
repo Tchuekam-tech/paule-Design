@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global salon brand identity, homepage sections, layout structure, hero, collage, hotspots, story, arc carousel, and footer banner.",
+      "type": "object",
+      "properties": {
+        "brand": { "type": "object", "description": "Brand name, tagline, contact details, copyright, and social links." },
+        "hero": { "type": "object", "description": "Hero headline, scroll label, background image URL, and alt text." },
+        "quote": { "type": "object", "description": "Editorial quote and sublabel beneath the arc showcase." },
+        "editorialCollage": { "type": "object", "description": "Heading lines and 4 collage tiles." },
+        "marqueePhrase": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "silhouetteImage": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "treatmentZones": { "type": "array", "description": "Interactive 01-06 hotspot pins and linked treatment slugs." },
+        "personalisedSection": { "type": "object", "description": "Personalised services heading, copy, CTA, and eye mapping image." },
+        "houseSection": { "type": "object", "description": "Everhouse sanctuary card copy, CTA, background, and inset images." },
+        "story": { "type": "object", "description": "Our Story page copy, imagery, and 3 studio philosophy pillars." },
+        "footerBanner": { "type": "object", "description": "Bottom macro-orchid CTA banner label and image." },
+        "instagramSection": { "type": "object", "description": "Homepage Instagram showcase eyebrow, heading, subtitle, handle, CTA label, and maxPosts count." },
+        "arcSlides": { "type": "array", "description": "Curved arc showcase carousel cards." },
+        "structure": { "type": "object", "description": "Homepage section order, visibility toggles, and shell feature flags." },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "minLength": 1, "maxLength": 200 }
+      },
+      "required": [
+        "brand",
+        "hero",
+        "quote",
+        "editorialCollage",
+        "marqueePhrase",
+        "treatmentZones",
+        "personalisedSection",
+        "houseSection",
+        "story",
+        "footerBanner",
+        "arcSlides",
+        "structure",
+        "updatedAt",
+        "updatedBy"
+      ]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Salon treatment offering with pricing tiers, duration, highlights, aftercare, and editorial photo.",
+      "type": "object",
+      "properties": {
+        "index": { "type": "string", "minLength": 1, "maxLength": 10 },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "pillar": {
+          "type": "string",
+          "enum": ["EVERLASH", "EVERBROW", "EVERNAILS", "EVERWAX", "EVER SPMU", "EVERBODY"]
+        },
+        "shortDescription": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "fullDescription": { "type": "string", "minLength": 1, "maxLength": 2500 },
+        "duration": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "technicianPrice": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "stylistPrice": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "highlights": { "type": "array", "description": "Up to 10 key treatment highlights." },
+        "aftercare": { "type": "array", "description": "Up to 10 post-treatment aftercare guidelines." },
+        "image": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "index",
+        "slug",
+        "name",
+        "pillar",
+        "shortDescription",
+        "fullDescription",
+        "duration",
+        "technicianPrice",
+        "stylistPrice",
+        "highlights",
+        "aftercare",
+        "image",
+        "order",
+        "updatedAt"
+      ]
+    },
+    "StudioLocation": {
+      "title": "StudioLocation",
+      "description": "Physical Everhouse salon sanctuary branch details.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "city": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "district": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "address": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "hours": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "privateRooms": { "type": "number" },
+        "servicesAvailable": { "type": "array", "description": "Up to 6 service pillars offered at this branch." },
+        "mapNote": { "type": "string", "minLength": 0, "maxLength": 240 },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name",
+        "city",
+        "district",
+        "address",
+        "hours",
+        "phone",
+        "privateRooms",
+        "servicesAvailable",
+        "mapNote",
+        "order",
+        "updatedAt"
+      ]
+    },
+    "JournalArticle": {
+      "title": "JournalArticle",
+      "description": "Editorial beauty journal post.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "date": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "readTime": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "excerpt": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "image": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "body": { "type": "array", "description": "Up to 20 body paragraphs." },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "slug",
+        "title",
+        "category",
+        "date",
+        "readTime",
+        "excerpt",
+        "image",
+        "body",
+        "order",
+        "updatedAt"
+      ]
+    },
+    "FaqItem": {
+      "title": "FaqItem",
+      "description": "Frequently asked question and multi-paragraph response.",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "paragraphs": { "type": "array", "description": "Up to 10 answer paragraphs." },
+        "hasLocationLink": { "type": "boolean" },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["question", "paragraphs", "hasLocationLink", "order", "updatedAt"]
+    },
+    "MediaAsset": {
+      "title": "MediaAsset",
+      "description": "Salon visual asset entry in the central media library.",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "category": { "type": "string", "enum": ["Hero", "Editorial", "Services", "Journal", "Sanctuary"] },
+        "url": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "alt": { "type": "string", "minLength": 0, "maxLength": 240 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["label", "category", "url", "alt", "createdAt"]
+    },
+    "ClientInquiry": {
+      "title": "ClientInquiry",
+      "description": "Client concierge message or appointment request submitted from the website. Contains PII and is readable only by salon managers.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["contact", "booking"] },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "contact": { "type": "string", "minLength": 5, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 0, "maxLength": 2000 },
+        "serviceName": { "type": "string", "minLength": 0, "maxLength": 140 },
+        "locationName": { "type": "string", "minLength": 0, "maxLength": 140 },
+        "therapistTier": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "preferredDate": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "preferredTime": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "status": { "type": "string", "enum": ["new", "contacted", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "type",
+        "name",
+        "contact",
+        "message",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "InstagramPost": {
+      "title": "InstagramPost",
+      "description": "Curated studio Instagram showcase post displayed on the homepage and managed in the Salon Manager Console.",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "caption": { "type": "string", "minLength": 1, "maxLength": 1200 },
+        "permalink": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "timestamp": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "mediaType": { "type": "string", "enum": ["IMAGE", "VIDEO", "CAROUSEL_ALBUM"] },
+        "pillar": {
+          "type": "string",
+          "enum": ["EVERLASH", "EVERBROW", "EVERNAILS", "EVERWAX", "EVER SPMU", "EVERBODY"]
+        },
+        "serviceSlug": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[a-z0-9-]+$" },
+        "username": { "type": "string", "minLength": 0, "maxLength": 60 },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["imageUrl", "caption", "permalink", "timestamp", "mediaType", "order", "updatedAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized salon manager allowed to administer website content and review client inquiries.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 180 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["manager", "owner"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "displayName", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/siteSettings/{docId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Singleton site settings document (`main`) storing global brand, structure, and homepage section content."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Individual treatment services displayed in the menu, hotspots, and booking modal."
+    },
+    "/locations/{locationId}": {
+      "schema": { "$ref": "#/entities/StudioLocation" },
+      "description": "Salon branch locations and opening hours."
+    },
+    "/journal/{articleId}": {
+      "schema": { "$ref": "#/entities/JournalArticle" },
+      "description": "Editorial journal articles."
+    },
+    "/faqs/{faqId}": {
+      "schema": { "$ref": "#/entities/FaqItem" },
+      "description": "Frequently asked questions displayed on the homepage."
+    },
+    "/instagramPosts/{postId}": {
+      "schema": { "$ref": "#/entities/InstagramPost" },
+      "description": "Curated studio Instagram posts shown on the homepage gallery."
+    },
+    "/mediaAssets/{assetId}": {
+      "schema": { "$ref": "#/entities/MediaAsset" },
+      "description": "Reusable studio photography library managed by the salon manager."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/ClientInquiry" },
+      "description": "Private client contact notes and appointment requests submitted via the storefront."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized salon manager accounts."
+    }
+  }
+}
